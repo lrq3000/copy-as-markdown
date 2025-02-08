@@ -1,7 +1,7 @@
 {
   "version": "0.0.5",
   "name": "Copy as Markdown",
-  "manifest_version": 2,
+  "manifest_version": 3,
   "description": "Copy the selected HTML as Markdown",
   "icons": {
     "16": "img/icon-16.png",
@@ -9,17 +9,18 @@
     "114": "img/icon-114.png",
     "128": "img/icon-128.png"
   },
-  "browser_action": {
+  "action": {
     "default_title": "Copy as Markdown"
   },
   "background": {
-    "scripts": [
-      "js/background_script.bundle.js"
-    ],
-    "persistent": false
+    "service_worker": "js/background_script.bundle.js",
+    "type": "module"
   },
   "web_accessible_resources": [
-    "js/content_script.bundle.js"
+    {
+      "resources": ["js/content_script.bundle.js"],
+      "matches": ["<all_urls>"]
+    }
   ],
   "commands": {
     "copy-as-markdown": {
@@ -34,6 +35,9 @@
     "contextMenus",
     "activeTab",
     "clipboardWrite"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "homepage_url": "https://github.com/sjmyuan/copy-as-markdown"
 }
