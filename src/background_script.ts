@@ -3,7 +3,8 @@ chrome.action.onClicked.addListener(async (tab) => {
     try {
       const selectionResult = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        files: ['js/content_script_get_selection.bundle.js']
+        files: ['js/content_script_get_selection.bundle.js'],
+        injectImmediately: true
       });
 
       chrome.runtime.onMessage.addListener(function messageListener(request, sender, sendResponse) {
@@ -15,7 +16,8 @@ chrome.action.onClicked.addListener(async (tab) => {
 
           chrome.scripting.executeScript({
             target: { tabId: tab.id as number },
-            files: ['js/content_script_show_message.bundle.js']
+            files: ['js/content_script_show_message.bundle.js'],
+            injectImmediately: true
           });
           // Send message to content script with markdown text
           chrome.tabs.sendMessage(tab.id as number, { markdownText: markdownText });
@@ -39,7 +41,8 @@ chrome.commands.onCommand.addListener(async function (command) {
       try {
         const selectionResult = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          files: ['js/content_script_get_selection.bundle.js']
+          files: ['js/content_script_get_selection.bundle.js'],
+          injectImmediately: true
         });
 
         chrome.runtime.onMessage.addListener(function messageListener(request, sender, sendResponse) {
@@ -51,7 +54,8 @@ chrome.commands.onCommand.addListener(async function (command) {
 
             chrome.scripting.executeScript({
               target: { tabId: tab.id as number }, // Assert tab.id is number
-              files: ['js/content_script_show_message.bundle.js']
+              files: ['js/content_script_show_message.bundle.js'],
+              injectImmediately: true
             });
             // Send message to content script with markdown text
             chrome.tabs.sendMessage(tab.id as number, { markdownText: markdownText }); // Assert tab.id is number
@@ -80,7 +84,8 @@ chrome.contextMenus.onClicked.addListener(async function (info, tab) {
       try {
         const selectionResult = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          files: ['js/content_script_get_selection.bundle.js']
+          files: ['js/content_script_get_selection.bundle.js'],
+          injectImmediately: true
         });
 
         chrome.runtime.onMessage.addListener(function messageListener(request, sender, sendResponse) {
@@ -92,7 +97,8 @@ chrome.contextMenus.onClicked.addListener(async function (info, tab) {
 
             chrome.scripting.executeScript({
               target: { tabId: tab.id as number }, // Assert tab.id is number
-              files: ['js/content_script_show_message.bundle.js']
+              files: ['js/content_script_show_message.bundle.js'],
+              injectImmediately: true
             });
             // Send message to content script with markdown text
             chrome.tabs.sendMessage(tab.id as number, { markdownText: markdownText }); // Assert tab.id is number
