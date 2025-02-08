@@ -5,15 +5,25 @@ chrome.action.onClicked.addListener(async (tab) => {
         target: { tabId: tab.id },
         files: ['js/content_script_get_selection.bundle.js']
       });
-      if (selectionResult && selectionResult[0]?.result) {
-        const markdownText = selectionResult[0].result as string;
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['js/content_script_show_message.bundle.js']
-        });
-        await navigator.clipboard.writeText(markdownText);
-        console.log('Text copied to clipboard');
-      }
+
+      chrome.runtime.onMessage.addListener(function messageListener(request, sender, sendResponse) {
+        if (sender.tab?.id === tab.id && request.selection !== undefined) {
+          chrome.runtime.onMessage.removeListener(messageListener); // Remove listener after handling message
+          const markdownText = request.selection as string;
+
+          console.log('Received markdown text:', markdownText);
+
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id as number },
+            files: ['js/content_script_show_message.bundle.js']
+          });
+          // Send message to content script with markdown text
+          chrome.tabs.sendMessage(tab.id as number, { markdownText: markdownText });
+        }
+      });
+
+
+      console.log('Text copied to clipboard');
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -31,15 +41,23 @@ chrome.commands.onCommand.addListener(async function (command) {
           target: { tabId: tab.id },
           files: ['js/content_script_get_selection.bundle.js']
         });
-        if (selectionResult && selectionResult[0]?.result) {
-          const markdownText = selectionResult[0].result as string;
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['js/content_script_show_message.bundle.js']
-          });
-          await navigator.clipboard.writeText(markdownText);
-          console.log('Text copied to clipboard');
-        }
+
+        chrome.runtime.onMessage.addListener(function messageListener(request, sender, sendResponse) {
+          if (sender.tab?.id === tab.id && request.selection !== undefined) {
+            chrome.runtime.onMessage.removeListener(messageListener); // Remove listener after handling message
+            const markdownText = request.selection as string;
+
+            console.log('Received markdown text:', markdownText);
+
+            chrome.scripting.executeScript({
+              target: { tabId: tab.id as number }, // Assert tab.id is number
+              files: ['js/content_script_show_message.bundle.js']
+            });
+            // Send message to content script with markdown text
+            chrome.tabs.sendMessage(tab.id as number, { markdownText: markdownText }); // Assert tab.id is number
+          }
+        });
+        console.log('Text copied to clipboard');
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
@@ -48,10 +66,12 @@ chrome.commands.onCommand.addListener(async function (command) {
 });
 
 
-chrome.contextMenus.create({
-  id: 'copy-as-markdown-context-menu',
-  title: 'Copy as Markdown',
-  contexts: ['selection']
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'copy-as-markdown-context-menu',
+    title: 'Copy as Markdown',
+    contexts: ['selection']
+  });
 });
 
 chrome.contextMenus.onClicked.addListener(async function (info, tab) {
@@ -62,15 +82,23 @@ chrome.contextMenus.onClicked.addListener(async function (info, tab) {
           target: { tabId: tab.id },
           files: ['js/content_script_get_selection.bundle.js']
         });
-        if (selectionResult && selectionResult[0]?.result) {
-          const markdownText = selectionResult[0].result as string;
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['js/content_script_show_message.bundle.js']
-          });
-          await navigator.clipboard.writeText(markdownText);
-          console.log('Text copied to clipboard');
-        }
+
+        chrome.runtime.onMessage.addListener(function messageListener(request, sender, sendResponse) {
+          if (sender.tab?.id === tab.id && request.selection !== undefined) {
+            chrome.runtime.onMessage.removeListener(messageListener); // Remove listener after handling message
+            const markdownText = request.selection as string;
+
+            console.log('Received markdown text:', markdownText);
+
+            chrome.scripting.executeScript({
+              target: { tabId: tab.id as number }, // Assert tab.id is number
+              files: ['js/content_script_show_message.bundle.js']
+            });
+            // Send message to content script with markdown text
+            chrome.tabs.sendMessage(tab.id as number, { markdownText: markdownText }); // Assert tab.id is number
+          }
+        });
+        console.log('Text copied to clipboard');
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
