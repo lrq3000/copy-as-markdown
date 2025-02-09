@@ -8,6 +8,8 @@ It works on desktop but also on Chrome for Android based browsers that support e
 
 * [Chrome WebStore](https://chrome.google.com/webstore/detail/copy-as-markdown/pcmnmggfchmeohmflkfocnkackgcnlln?authuser=0&hl=en)
 
+* Or download the latest developer release in the [GitHub Releases](https://github.com/lrq3000/copy-as-markdown/releases/) page. Then, to install, enable debug mode in Chrome and download the attached zip, unzip it anywhere, and load it in Chrome as an unpackaged extension by pointing to the unzipped folder (otherwise, even signed CRX files that are not hosted on the Chrome WebStore are now disabled forcefully since Chrome forcefully migrated to MV3 in 2025).
+
 ## Usage
 
 1. Click `Copy as Markdown` icon in the toolbar.
