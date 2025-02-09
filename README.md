@@ -1,6 +1,6 @@
 # Copy as Markdown
 
-A simple chrome extension which can copy the selected HTML as Markdown to clipboard.
+A simple chrome extension which can copy the selected HTML as Markdown to clipboard. Can copy any web page, and it doubles as a LLM/GPT chat log exporter.
 
 It works on desktop but also on Chrome for Android based browsers that support extensions (eg, Edge Canary).
 
