@@ -22,6 +22,8 @@ This is a fork of [sjmyuan's](https://github.com/sjmyuan/copy-as-markdown) exten
 
 3. Press `Alt+Shift+Y` on Windows or `Option+Shift+Y` on Mac.
 
+Can copy content from most LLM/GPT interfaces, including ChatGPT, Claude, Gemini, DeepSeek, Mistral, Open WebUI outputs.
+
 ## Build
 
 * to build, use `npm run build`
