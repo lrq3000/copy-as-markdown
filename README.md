@@ -24,6 +24,8 @@ This is a fork of [sjmyuan's](https://github.com/sjmyuan/copy-as-markdown) exten
 
 Can copy content from most LLM/GPT interfaces, including ChatGPT, Claude, Gemini, DeepSeek, Mistral, Open WebUI outputs.
 
+It can also be used as a web clipper, especially when combined with a Markdown editor such as [Markor](https://github.com/gsantner/markor) on Android or [Typora](https://typora.io/) on desktop OSes.
+
 ## Build
 
 * to build, use `npm run build`
