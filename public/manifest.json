@@ -1,8 +1,8 @@
 {
-  "version": "0.0.7",
-  "name": "Copy as Markdown",
+  "version": "0.0.8",
+  "name": "Copy as Markdown MV3",
   "manifest_version": 3,
-  "description": "Copy the selected HTML as Markdown",
+  "description": "Copy the selected HTML as Markdown. Compatible with ChatGPT/Claude/Gemini/DeepSeek/Mistral/LLMs outputs.",
   "icons": {
     "16": "img/icon-16.png",
     "48": "img/icon-48.png",
@@ -10,7 +10,7 @@
     "128": "img/icon-128.png"
   },
   "action": {
-    "default_title": "Copy as Markdown"
+    "default_title": "Copy as Markdown MV3"
   },
   "background": {
     "service_worker": "js/background_script.bundle.js",
@@ -36,7 +36,7 @@
         "default": "Alt+Shift+Y",
         "mac": "Alt+Shift+Y"
       },
-      "description": "Copy as Markdown"
+      "description": "Copy as Markdown MV3"
     }
   },
   "permissions": [
