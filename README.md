@@ -1,4 +1,4 @@
-# Copy as Markdown
+# Copy as Markdown MV3
 
 A simple chrome extension which can copy the selected HTML as Markdown to clipboard, including hypertext links. Can copy any web page's content, and it doubles as a LLM/GPT chat log exporter.
 
