@@ -1,7 +1,7 @@
 # What information do we collect?
 
 This is an offline extension, we won't collect any data.
-What we do is just transfer your selected HTML to Markdown, then copy it to your clipboard.
+What the extension does is fully offline, it only converts the selected HTML to Markdown, then copy it to the user's OS clipboard.
 
 # Dispute Resolution
 
@@ -9,8 +9,6 @@ If you have a complaint about `Copy as Markdown`'s privacy practices you should 
 
 # Updates to Privacy Policy
 
-We may update this Privacy Policy to reflect changes to our information practices.
-If we make any material changes that have a substantive and adverse impact on your privacy, we will provide notice on this website and notify you by email (sent to the e-mail address specified in your account) for your approval prior to the change becoming effective. 
-We encourage you to periodically review this page for the latest information on our privacy practices.
+We will not update this Privacy Policy, our information practices will not change.
 
 If you have any other questions about this policy please send email to `lrq3000dev@gmail.com`
