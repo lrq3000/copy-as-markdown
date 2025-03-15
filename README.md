@@ -48,3 +48,5 @@ The private key can be left out for testing purposes, one will then be autogener
 Original author: sjmyuan
 
 Originally hosted at: [https://github.com/sjmyuan/copy-as-markdown](https://github.com/sjmyuan/copy-as-markdown)
+
+Ported to MV3 by Stephen Karl Larroque (lrq3000) with AI coding.
