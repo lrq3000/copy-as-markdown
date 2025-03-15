@@ -1,5 +1,5 @@
 {
-  "version": "0.0.8",
+  "version": "0.0.9",
   "name": "Copy as Markdown MV3",
   "manifest_version": 3,
   "description": "Copy the selected HTML as Markdown. Compatible with ChatGPT/Claude/Gemini/DeepSeek/Mistral/LLMs outputs.",
@@ -16,18 +16,24 @@
     "service_worker": "js/background_script.bundle.js",
     "type": "module"
   },
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "clipboardWrite",
+    "scripting"
+  ],
   "web_accessible_resources": [
     {
       "resources": ["js/content_script.bundle.js"],
-      "matches": ["<all_urls>"]
+      "matches": ["*://*/*"]
     },
     {
       "resources": ["js/content_script_get_selection.bundle.js"],
-      "matches": ["<all_urls>"]
+      "matches": ["*://*/*"]
     },
     {
       "resources": ["js/content_script_show_message.bundle.js"],
-      "matches": ["<all_urls>"]
+      "matches": ["*://*/*"]
     }
   ],
   "commands": {
@@ -39,14 +45,5 @@
       "description": "Copy as Markdown MV3"
     }
   },
-  "permissions": [
-    "contextMenus",
-    "activeTab",
-    "clipboardWrite",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
-  "homepage_url": "https://github.com/sjmyuan/copy-as-markdown"
+  "homepage_url": "https://github.com/lrq3000/copy-as-markdown"
 }
