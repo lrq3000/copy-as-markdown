@@ -2,9 +2,9 @@
 
 A simple chrome extension which can copy the selected HTML as Markdown to clipboard, including hypertext links. Can copy any web page's content, and it doubles as a LLM/GPT chat log exporter.
 
-Usage is simple: select some text, then simply tap the extension's icon, or right-click and click the menu item, a nice infobox will temporarily pop up at the bottom to confirm the copy worked.
+Usage is simple: select some (structured) text, then simply tap the extension's icon, or right-click and click the menu item, a nice infobox will temporarily pop up at the bottom to confirm the copy worked. A lot of formatting styles and HTML structures can be converted and copied to markdown: bold, italics, links, tables, etc.
 
-It works on desktop, but it is the only copy as markdown extension that also works on mobile, on Chrome for Android based browsers that support extensions (eg, [Mises](https://github.com/mises-id/mises-browser-core), Kiwi, Edge Canary, Quetta, Lemur).
+It works on desktop, and it is the only copy as markdown extension that also works on mobile, on Chrome for Android based browsers that support extensions (eg, [Mises](https://github.com/mises-id/mises-browser-core), Kiwi, Edge Canary, Quetta, Lemur).
 
 This is a fork of [sjmyuan's](https://github.com/sjmyuan/copy-as-markdown) extension ported to Manifest V3.
 
