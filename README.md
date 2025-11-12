@@ -28,7 +28,7 @@ There are three different ways to trigger a copy after selecting a text, all pro
 
 All these methods will translate the selection to Markdown and copy it into the clipboard.
 
-The extension can copy complex content from most LLM/GPT interfaces, including ChatGPT, Claude, Gemini, DeepSeek, Mistral, Open WebUI outputs.
+The extension can copy content with advanced formatting from most LLM/GPT interfaces, including ChatGPT, Claude, Gemini, DeepSeek, Mistral, Open WebUI outputs.
 
 A common use case is that it can copy the whole of a ChatGPT chat thread, by first scrolling to the top and then the bottom of the chat to load all messages, and then select all text and tap on the extension's icon.
 
