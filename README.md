@@ -4,6 +4,8 @@ A simple chrome extension which can copy the selected HTML as Markdown to clipbo
 
 Usage is simple: select some (structured) text, then simply tap the extension's icon, or right-click and click the menu item, a nice infobox will temporarily pop up at the bottom to confirm the copy worked. A lot of formatting styles and HTML structures can be converted and copied to markdown: bold, italics, links, tables, etc.
 
+Compared to other "Copy as markdown" extensions, this one has the most complete support of HTML elements, as it is able to copy and translate to Markdown pretty much anything, including tables.
+
 It works on desktop, and it is the only copy as markdown extension that also works on mobile, on Chrome for Android based browsers that support extensions (eg, [Mises](https://github.com/mises-id/mises-browser-core), [Cromite](https://github.com/uazo/cromite/commit/d04c8d8c7d7d2bb121d9315d535d99ac91c30825), Edge Canary).
 
 This is a fork of [sjmyuan's](https://github.com/sjmyuan/copy-as-markdown) extension ported to Manifest V3.
@@ -16,13 +18,17 @@ This is a fork of [sjmyuan's](https://github.com/sjmyuan/copy-as-markdown) exten
 
 ## Usage
 
-1. Click `Copy as Markdown` icon in the toolbar.
+There are three different ways to trigger a copy after selecting a text, all producing the exact same result:
 
-2. Click the right button and click `Copy as Markdown` menu.
+1. Either click `Copy as Markdown` icon in the toolbar.
 
-3. Press `Alt+Shift+Y` on Windows or `Option+Shift+Y` on Mac.
+2. Either click the right button and click `Copy as Markdown` menu.
 
-Can copy content from most LLM/GPT interfaces, including ChatGPT, Claude, Gemini, DeepSeek, Mistral, Open WebUI outputs.
+3. Either press `Alt+Shift+Y` on Windows or `Option+Shift+Y` on Mac.
+
+All these methods will translate the selection to Markdown and copy it into the clipboard.
+
+The extension can copy complex content from most LLM/GPT interfaces, including ChatGPT, Claude, Gemini, DeepSeek, Mistral, Open WebUI outputs.
 
 A common use case is that it can copy the whole of a ChatGPT chat thread, by first scrolling to the top and then the bottom of the chat to load all messages, and then select all text and tap on the extension's icon.
 
