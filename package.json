@@ -1,6 +1,6 @@
 {
   "name": "copy-as-markdown",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Copy the selected HTML as Markdown. Compatible with ChatGPT/Claude/Gemini/DeepSeek/Mistral/LLMs outputs.",
   "main": "index.js",
   "scripts": {
