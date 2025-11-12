@@ -2,7 +2,7 @@
   "version": "0.0.11",
   "name": "Copy as Markdown MV3",
   "manifest_version": 3,
-  "description": "Copy the selected HTML as Markdown. Compatible with ChatGPT/Claude/Gemini/DeepSeek/Mistral/LLMs outputs.",
+  "description": "Copy the selected HTML as Markdown. Compatible with LLM chatbots outputs such as ChatGPT and Gemini.",
   "icons": {
     "16": "img/icon-16.png",
     "48": "img/icon-48.png",
