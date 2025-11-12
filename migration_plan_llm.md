@@ -64,3 +64,17 @@ Next steps:
 5. **Test and Validate:**  Manually test the extension in Chrome after loading it as an unpacked extension to ensure all functionalities work as expected.
 
 Let's proceed with testing the extension in Chrome. Please load the extension as unpacked and test the functionalities. Let me know if there are any issues.
+
+--------
+
+Changes from v0.0.9 to v0.0.10:
+* The service worker and listener got started before they are needed so that they can catch. But the listeners are still created on-demand when needed (on click). Also, the listeners now have a timeout, so this avoids listeners piling up in RAM.
+
+Changes from v0.0.10 to v0.0.11 (aka how all the bugs with the clicks got fixed):
+* Before (Original Code):
+    * Created/removed message listeners for each click
+    * Service worker was already running (no change)
+* After (Current Code):
+    * One persistent message listener (always active, very low overhead)
+    * A small Map that tracks pending requests: Map<number, {resolve, reject, timeout}>
+    * Service worker stays running (same as before)
