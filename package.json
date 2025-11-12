@@ -1,14 +1,14 @@
 {
   "name": "copy-as-markdown",
-  "version": "0.0.2",
-  "description": "A chrome extension to copy HTML as Markdown",
+  "version": "0.0.10",
+  "description": "Copy the selected HTML as Markdown. Compatible with ChatGPT/Claude/Gemini/DeepSeek/Mistral/LLMs outputs.",
   "main": "index.js",
   "scripts": {
     "build": "node scripts/build.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sjmyuan/copy-as-markdown.git"
+    "url": "git+https://github.com/lrq3000/copy-as-markdown.git"
   },
   "keywords": [
     "Chrome",
@@ -19,9 +19,9 @@
   "author": "sjmyuan",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sjmyuan/copy-as-markdown/issues"
+    "url": "https://github.com/lrq3000/copy-as-markdown/issues"
   },
-  "homepage": "https://github.com/sjmyuan/copy-as-markdown#readme",
+  "homepage": "https://github.com/lrq3000/copy-as-markdown#readme",
   "dependencies": {
     "turndown": "^5.0.3",
     "turndown-plugin-gfm": "^1.0.2"
