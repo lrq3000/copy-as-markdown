@@ -36,7 +36,9 @@ It can also be used as a web clipper, especially when combined with a Markdown e
 
 ## Build
 
-* to build, use `yarn build` or `npm run build`.
+* first install the dependencies: `npm install`.
+
+* to build, use `npm run build`.
 
 * you can already load the content of the `dist/` subfolder as an unpackaged extension if you have enabled developer mode in the extensions page of Chrome/Chromium.
 
