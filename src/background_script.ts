@@ -6,7 +6,7 @@ chrome.runtime.onStartup.addListener(() => {
 // Use a persistent message listener instead of creating/removing listeners
 let pendingRequests: Map<number, {resolve: Function, reject: Function, timeout: NodeJS.Timeout}> = new Map();
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (sender.tab?.id && request.selection !== undefined) {
     const tabId = sender.tab.id;
     const pendingRequest = pendingRequests.get(tabId);
@@ -17,17 +17,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       const markdownText = request.selection as string;
 
-      // Execute show message script
-      chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ['js/content_script_show_message.bundle.js'],
-        injectImmediately: true
-      });
+      try {
+        // Execute show message script
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ['js/content_script_show_message.bundle.js'],
+          injectImmediately: true
+        });
 
-      // Send message to content script with markdown text
-      chrome.tabs.sendMessage(tabId, { markdownText: markdownText });
+        // Send message to content script with markdown text
+        await chrome.tabs.sendMessage(tabId, { markdownText: markdownText });
 
-      pendingRequest.resolve();
+        pendingRequest.resolve();
+      } catch (err) {
+        console.error('Failed to inject script or send message:', err);
+        pendingRequest.reject(err);
+      }
     }
   }
 });
