@@ -1,2 +1,3 @@
 node_modules
 dist
+package-lock.json  # because we use `yarn --immutable` so there is a yarn.lock that is git tracked for reproducible builds
