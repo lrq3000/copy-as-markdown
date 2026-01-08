@@ -40,7 +40,7 @@ It can also be used as a web clipper, especially when combined with a Markdown e
 
 * then install the dependencies: `npm ci` for reproducible builds using `package-lock.json` (frozen packages list), or `npm install` to use `package.json` (latest packages releases with potential bugfixes but may introduce API errors).
 
-* to build, use `npm run build`.
+* to build, use `npm run build`. This will create a `dist/` subfolder.
 
 * you can already load the content of the `dist/` subfolder as an unpackaged extension if you have enabled developer mode in the extensions page of Chrome/Chromium.
 
