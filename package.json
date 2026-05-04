@@ -25,25 +25,25 @@
   },
   "homepage": "https://github.com/lrq3000/copy-as-markdown#readme",
   "dependencies": {
-    "turndown": "^5.0.3",
+    "turndown": "^7.2.4",
     "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.3",
-    "@babel/preset-typescript": "^7.28.5",
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@babel/preset-typescript": "^7.23.0",
     "@types/chrome": "^0.0.304",
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.0",
     "@types/turndown": "^5.0.0",
     "crx3": "^2.0.0",
     "fs-extra": "^8.1.0",
-    "jest": "^30.3.0",
+    "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.3.0",
-    "terser-webpack-plugin": "^4.2.3",
-    "ts-jest": "^29.4.9",
+    "terser-webpack-plugin": "^5.5.0",
+    "ts-jest": "^29.1.0",
     "ts-loader": "^6.2.1",
     "typescript": "^3.8.2",
-    "webpack": "^4.41.6",
-    "webpack-dev-server": "^3.10.3"
+    "webpack": "^5.106.2",
+    "webpack-dev-server": "^5.2.3"
   }
 }
