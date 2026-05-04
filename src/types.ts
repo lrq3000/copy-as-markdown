@@ -3,6 +3,9 @@ import {gfm} from 'turndown-plugin-gfm';
 
 export const turndownServie = new TurndownServie({headingStyle: 'atx', codeBlockStyle: 'fenced'});
 turndownServie.use(gfm)
+turndownServie.escape = function (string) {
+  return string; // Do not escape characters
+};
 
 export const getHtmlSelection: () => string | undefined = () => {
   const selection = window.getSelection()

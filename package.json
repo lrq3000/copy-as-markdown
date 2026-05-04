@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "node scripts/build.js",
-    "build:crx": "crx3 --zip --key dist.pem dist/"
+    "build:crx": "crx3 --zip --key dist.pem dist/",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -28,11 +29,18 @@
     "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.3",
+    "@babel/preset-typescript": "^7.28.5",
     "@types/chrome": "^0.0.304",
+    "@types/jest": "^30.0.0",
     "@types/turndown": "^5.0.0",
     "crx3": "^2.0.0",
     "fs-extra": "^8.1.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
     "terser-webpack-plugin": "^4.2.3",
+    "ts-jest": "^29.4.9",
     "ts-loader": "^6.2.1",
     "typescript": "^3.8.2",
     "webpack": "^4.41.6",
