@@ -39,6 +39,11 @@ describe('turndownService', () => {
     expect(turndownServie.turndown(html)).toBe('$$a^2 + b^2 = c^2$$');
   });
 
+  it('renders inline KaTeX properly', () => {
+    const html = `<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span></span>`;
+    expect(turndownServie.turndown(html)).toBe('$x$');
+  });
+
   it('renders MathJax v2 script correctly', () => {
     const htmlInline = `<script type="math/tex">x^2</script>`;
     const htmlDisplay = `<script type="math/tex; mode=display">y^2</script>`;
