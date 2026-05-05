@@ -3,6 +3,26 @@ import {gfm} from 'turndown-plugin-gfm';
 
 export const turndownServie = new TurndownServie({headingStyle: 'atx', codeBlockStyle: 'fenced'});
 turndownServie.use(gfm)
+const defaultEscape = turndownServie.escape.bind(turndownServie);
+
+const preserveRawMarkdownPattern = /(\$\$[\s\S]*?\$\$|\$[^$]+\$|\\\[[\s\S]*?\\\]|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|__[^_]+__|_[^_]+_)/g;
+
+turndownServie.escape = function (string) {
+  let escaped = '';
+  let cursor = 0;
+
+  for (const match of string.matchAll(preserveRawMarkdownPattern)) {
+    const matchIndex = match.index ?? 0;
+    const matchedText = match[0];
+    escaped += defaultEscape(string.slice(cursor, matchIndex));
+    escaped += matchedText;
+    cursor = matchIndex + matchedText.length;
+  }
+
+  escaped += defaultEscape(string.slice(cursor));
+  preserveRawMarkdownPattern.lastIndex = 0;
+  return escaped;
+};
 
 export const getHtmlSelection: () => string | undefined = () => {
   const selection = window.getSelection()
