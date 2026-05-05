@@ -13,7 +13,7 @@ turndownServie.addRule('katex', {
     const annotation = (node as Element).querySelector('annotation[encoding="application/x-tex"]');
     if (annotation) {
       const isDisplay = node.parentNode && (node.parentNode as Element).classList && (node.parentNode as Element).classList.contains('katex-display');
-      const tex = annotation.textContent;
+      const tex = annotation.textContent || '';
       if (isDisplay) {
         return '$$' + tex + '$$';
       } else {
@@ -21,6 +21,36 @@ turndownServie.addRule('katex', {
       }
     }
     return content;
+  }
+});
+
+turndownServie.addRule('mathjax_script', {
+  filter: function (node) {
+    return node.nodeName === 'SCRIPT' && (node as HTMLScriptElement).type && (node as HTMLScriptElement).type.indexOf('math/tex') === 0;
+  },
+  replacement: function (content, node) {
+    const isDisplay = (node as HTMLScriptElement).type.includes('mode=display');
+    const tex = node.textContent || '';
+    if (isDisplay) {
+      return '$$' + tex + '$$';
+    } else {
+      return '$' + tex + '$';
+    }
+  }
+});
+
+turndownServie.addRule('mathjax_ignore', {
+  filter: function (node) {
+    return (node as Element).classList && (
+      (node as Element).classList.contains('MathJax_Preview') ||
+      (node as Element).classList.contains('MathJax_SVG') ||
+      (node as Element).classList.contains('MathJax') ||
+      (node as Element).classList.contains('MathJax_CHTML') ||
+      node.nodeName === 'MJX-CONTAINER'
+    );
+  },
+  replacement: function () {
+    return '';
   }
 });
 
