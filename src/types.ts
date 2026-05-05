@@ -5,6 +5,25 @@ export const turndownServie = new TurndownServie({headingStyle: 'atx', codeBlock
 turndownServie.use(gfm)
 const defaultEscape = turndownServie.escape.bind(turndownServie);
 
+turndownServie.addRule('katex', {
+  filter: function (node) {
+    return node.nodeName === 'SPAN' && node.classList.contains('katex');
+  },
+  replacement: function (content, node) {
+    const annotation = (node as Element).querySelector('annotation[encoding="application/x-tex"]');
+    if (annotation) {
+      const isDisplay = node.parentNode && (node.parentNode as Element).classList && (node.parentNode as Element).classList.contains('katex-display');
+      const tex = annotation.textContent;
+      if (isDisplay) {
+        return '$$' + tex + '$$';
+      } else {
+        return '$' + tex + '$';
+      }
+    }
+    return content;
+  }
+});
+
 const preserveRawMarkdownPattern = /(\$\$[\s\S]*?\$\$|\$[^$]+\$|\\\[[\s\S]*?\\\]|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|__[^_]+__|_[^_]+_)/g;
 
 turndownServie.escape = function (string) {
