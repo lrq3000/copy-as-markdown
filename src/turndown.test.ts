@@ -23,6 +23,11 @@ describe('turndownService', () => {
     expect(turndownServie.turndown('<div>$$ \\sum_{i=1}^{n} x_i $$</div>')).toBe('$$ \\sum_{i=1}^{n} x_i $$');
   });
 
+  it('escapes html while preserving markdown/math segments in mixed content', () => {
+    expect(turndownServie.turndown('<div>Math $x < y$ and <span>more</span> text.</div>'))
+      .toBe('Math $x < y$ and more text.');
+  });
+
   it('renders table markdown', () => {
     const html = '<table><tr><th>Head 1</th><th>Head 2</th></tr><tr><td>Data 1</td><td>Data 2</td></tr></table>';
     expect(turndownServie.turndown(html)).toContain('| Head 1 | Head 2 |');
