@@ -56,8 +56,11 @@ turndownServie.addRule('mathjax_ignore', {
 
 turndownServie.addRule('pre-code-with-br', {
   filter: function (node) {
-    if (node.nodeName === 'PRE' && (node as Element).querySelector('code') !== null && (node as Element).querySelector('br') !== null) {
-      return true;
+    if (node.nodeName === 'PRE') {
+      const codeEl = (node as Element).querySelector('code');
+      if (codeEl && codeEl.querySelector('br') !== null) {
+        return true;
+      }
     }
     if (node.nodeName === 'CODE' && node.parentNode && node.parentNode.nodeName !== 'PRE' && (node as Element).querySelector('br') !== null) {
       return true;
