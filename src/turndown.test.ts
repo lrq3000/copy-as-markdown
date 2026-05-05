@@ -55,4 +55,17 @@ describe('turndownService', () => {
     const html = `<div><span class="MathJax_Preview">test</span><span class="MathJax"></span><mjx-container></mjx-container><script type="math/tex">z^2</script></div>`;
     expect(turndownServie.turndown(html)).toBe('$z^2$');
   });
+
+  it('preserves line breaks in code blocks with br tags', () => {
+    const htmlWithPre = `<pre><code><span>Scarcity</span><br><span>Utility</span><br><span>Decentralization</span></code></pre>`;
+    const expected = '```\nScarcity\nUtility\nDecentralization\n```';
+    expect(turndownServie.turndown(htmlWithPre)).toBe(expected);
+
+    const htmlWithoutPre = `<code><span>Scarcity</span><br><span>Utility</span><br><span>Decentralization</span></code>`;
+    expect(turndownServie.turndown(htmlWithoutPre)).toBe(expected);
+
+    const htmlWithLanguage = `<pre><code class="language-javascript"><span>Scarcity</span><br><span>Utility</span></code></pre>`;
+    const expectedLanguage = '```javascript\nScarcity\nUtility\n```';
+    expect(turndownServie.turndown(htmlWithLanguage)).toBe(expectedLanguage);
+  });
 });
