@@ -93,6 +93,33 @@ Second line</div>`;
     expect(turndownServie.turndown(html)).toBe('First line  \n  \nSecond line');
   });
 
+  it('preserves newlines for all newline-preserving white-space values', () => {
+    expect(turndownServie.turndown('<div style="white-space: pre">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<div style="white-space: pre-wrap">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<div style="white-space: pre-line">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<div style="white-space: break-spaces">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+  });
+
+  it('collapses newlines to spaces for white-space values that do not preserve them', () => {
+    expect(turndownServie.turndown('<div style="white-space: normal">First line\nSecond line</div>'))
+      .toBe('First line Second line');
+    expect(turndownServie.turndown('<div style="white-space: nowrap">First line\nSecond line</div>'))
+      .toBe('First line Second line');
+  });
+
+  it('honors nested white-space overrides', () => {
+    const html = `<div style="white-space: pre-wrap">First line
+<span style="white-space: normal">Second
+line</span>
+Third line</div>`;
+
+    expect(turndownServie.turndown(html)).toBe('First line  \nSecond line  \nThird line');
+  });
+
   it('preserves ordinary links', () => {
     expect(turndownServie.turndown('<p>Read <a href="https://example.com/docs">the docs</a>.</p>'))
       .toBe('Read [the docs](https://example.com/docs).');

@@ -19,10 +19,64 @@ const hasClass = (node: Element, className: string): boolean => {
   return node.classList && node.classList.contains(className);
 };
 
-const isPreWrapContainer = (node: Element): boolean => {
-  const style = node.getAttribute('style') || '';
+type WhiteSpaceNewlineMode = 'preserve' | 'collapse';
 
-  return hasClass(node, 'whitespace-pre-wrap') || /white-space\s*:\s*(pre-wrap|break-spaces|pre-line)/i.test(style);
+const whiteSpaceClassNewlineModes: {[className: string]: WhiteSpaceNewlineMode} = {
+  'whitespace-break-spaces': 'preserve',
+  'whitespace-normal': 'collapse',
+  'whitespace-nowrap': 'collapse',
+  'whitespace-pre': 'preserve',
+  'whitespace-pre-line': 'preserve',
+  'whitespace-pre-wrap': 'preserve'
+};
+
+const whiteSpaceValueNewlineModes: {[value: string]: WhiteSpaceNewlineMode} = {
+  'break-spaces': 'preserve',
+  'collapse': 'collapse',
+  'normal': 'collapse',
+  'nowrap': 'collapse',
+  'pre': 'preserve',
+  'pre-line': 'preserve',
+  'pre-wrap': 'preserve',
+  'preserve-breaks': 'preserve',
+  'preserve-spaces': 'collapse',
+  'wrap': 'collapse'
+};
+
+const getWhiteSpaceStyleValue = (node: Element): string | undefined => {
+  const style = node.getAttribute('style') || '';
+  const match = style.match(/(?:^|;)\s*white-space\s*:\s*([^;]+)/i);
+
+  return match ? match[1].trim().toLowerCase().replace(/\s+/g, ' ') : undefined;
+};
+
+const getWhiteSpaceModeFromValue = (value: string | undefined): WhiteSpaceNewlineMode | undefined => {
+  if (!value) return undefined;
+  if (whiteSpaceValueNewlineModes[value]) return whiteSpaceValueNewlineModes[value];
+
+  // CSS Text Level 4 allows two-keyword shorthands such as
+  // `white-space: preserve nowrap`. Any `preserve` shorthand except
+  // `preserve-spaces` keeps authored segment breaks as displayed line breaks.
+  if (/\bpreserve\b/.test(value) && !/\bpreserve-spaces\b/.test(value)) return 'preserve';
+  if (/\b(collapse|normal|nowrap)\b/.test(value)) return 'collapse';
+
+  return undefined;
+};
+
+const getWhiteSpaceModeFromClass = (node: Element): WhiteSpaceNewlineMode | undefined => {
+  for (const className of Object.keys(whiteSpaceClassNewlineModes)) {
+    if (hasClass(node, className)) return whiteSpaceClassNewlineModes[className];
+  }
+
+  return undefined;
+};
+
+const getDeclaredWhiteSpaceMode = (node: Element): WhiteSpaceNewlineMode | undefined => {
+  return getWhiteSpaceModeFromValue(getWhiteSpaceStyleValue(node)) || getWhiteSpaceModeFromClass(node);
+};
+
+const hasExplicitWhiteSpaceHandling = (html: string): boolean => {
+  return /white-space\s*:|whitespace-(normal|nowrap|pre|pre-wrap|pre-line|break-spaces)/i.test(html);
 };
 
 const unescapeHeadingContent = (content: string): string => {
@@ -63,9 +117,14 @@ const getReadableLinkText = (content: string, node: HTMLAnchorElement): string =
   return hrefHostname;
 };
 
-const replaceTextNewlinesWithBreaks = (node: Node): void => {
+const replaceTextNewlines = (node: Node, mode: WhiteSpaceNewlineMode): void => {
   for (const child of Array.from(node.childNodes)) {
     if (child.nodeType === 3 && child.textContent && /\r|\n/.test(child.textContent)) {
+      if (mode === 'collapse') {
+        child.textContent = child.textContent.replace(/[\r\n]+/g, ' ');
+        continue;
+      }
+
       const parts = child.textContent.split(/(\r\n|\r|\n)/);
 
       for (const part of parts) {
@@ -81,15 +140,17 @@ const replaceTextNewlinesWithBreaks = (node: Node): void => {
       node.removeChild(child);
       continue;
     }
-
-    replaceTextNewlinesWithBreaks(child);
   }
 };
 
-const preservePreWrapNewlines = (root: ParentNode): void => {
-  for (const node of Array.from(root.querySelectorAll('*'))) {
-    if (isPreWrapContainer(node as Element)) {
-      replaceTextNewlinesWithBreaks(node);
+const normalizeWhiteSpaceTextNodes = (node: Node, inheritedMode: WhiteSpaceNewlineMode): void => {
+  const mode = node.nodeType === 1 ? getDeclaredWhiteSpaceMode(node as Element) || inheritedMode : inheritedMode;
+
+  replaceTextNewlines(node, mode);
+
+  for (const child of Array.from(node.childNodes)) {
+    if (child.nodeType === 1) {
+      normalizeWhiteSpaceTextNodes(child, mode);
     }
   }
 };
@@ -107,18 +168,18 @@ const createPreprocessRoot = (html: string): Element | null => {
 
 const preprocessTurndownInput = (input: string | Node): string | Node => {
   if (typeof input === 'string') {
-    if (!/(\r|\n|whitespace-pre-wrap|white-space\s*:)/i.test(input)) return input;
+    if (!/(\r|\n)/.test(input) || !hasExplicitWhiteSpaceHandling(input)) return input;
 
     const root = createPreprocessRoot(input);
     if (!root) return input;
 
-    preservePreWrapNewlines(root);
+    normalizeWhiteSpaceTextNodes(root, 'collapse');
     return root.innerHTML;
   }
 
   const root = input.cloneNode(true) as Node;
   if ('querySelectorAll' in root) {
-    preservePreWrapNewlines(root as ParentNode);
+    normalizeWhiteSpaceTextNodes(root, 'collapse');
   }
   return root;
 };
