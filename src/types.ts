@@ -72,11 +72,19 @@ const getWhiteSpaceModeFromClass = (node: Element): WhiteSpaceNewlineMode | unde
 };
 
 const getDeclaredWhiteSpaceMode = (node: Element): WhiteSpaceNewlineMode | undefined => {
-  return getWhiteSpaceModeFromValue(getWhiteSpaceStyleValue(node)) || getWhiteSpaceModeFromClass(node);
+  const declaredMode = getWhiteSpaceModeFromValue(getWhiteSpaceStyleValue(node)) || getWhiteSpaceModeFromClass(node);
+  if (declaredMode) return declaredMode;
+
+  // Browsers give these elements preformatted default whitespace semantics even
+  // without an authored CSS declaration. Preserve their segment breaks unless a
+  // copied inline style or utility class explicitly overrides that behavior.
+  if (node.nodeName === 'PRE' || node.nodeName === 'TEXTAREA') return 'preserve';
+
+  return undefined;
 };
 
 const hasExplicitWhiteSpaceHandling = (html: string): boolean => {
-  return /white-space\s*:|whitespace-(normal|nowrap|pre|pre-wrap|pre-line|break-spaces)/i.test(html);
+  return /white-space\s*:|whitespace-(normal|nowrap|pre|pre-wrap|pre-line|break-spaces)|<(pre|textarea)(\s|>)/i.test(html);
 };
 
 const unescapeHeadingContent = (content: string): string => {
@@ -88,8 +96,21 @@ const unescapeHeadingContent = (content: string): string => {
 };
 
 const escapeLinkDestination = (destination: string): string => {
-  const escaped = destination.replace(/([<>()])/g, '\\$1');
-  return escaped.indexOf(' ') >= 0 ? '<' + escaped + '>' : escaped;
+  const safeDestination = destination.replace(/[\r\n]+/g, ' ').trim();
+
+  if (safeDestination.indexOf(' ') >= 0) {
+    return '<' + safeDestination.replace(/([\\<>])/g, '\\$1') + '>';
+  }
+
+  return safeDestination.replace(/([\\<>()])/g, '\\$1');
+};
+
+const cleanAttribute = (attribute: string | null): string => {
+  return attribute ? attribute.replace(/(\n+\s*)+/g, '\n') : '';
+};
+
+const escapeLinkTitle = (title: string): string => {
+  return title.replace(/"/g, '\\"');
 };
 
 const getHostname = (href: string): string => {
@@ -100,21 +121,89 @@ const getHostname = (href: string): string => {
   }
 };
 
+const hasCitationMarker = (node: Element): boolean => {
+  let current: Element | null = node;
+
+  while (current) {
+    if (hasClass(current, 'citation') || current.hasAttribute('data-citation') || current.getAttribute('data-testid') === 'webpage-citation-pill') {
+      return true;
+    }
+
+    current = current.parentElement;
+  }
+
+  return false;
+};
+
 const getReadableLinkText = (content: string, node: HTMLAnchorElement): string => {
   const text = content.replace(/\s+/g, ' ').trim();
   const hrefHostname = getHostname(node.getAttribute('href') || '');
 
   // Citation pills often render the source hostname, counters such as "+2",
-  // and hidden animated alternative labels inside the same anchor. If the
-  // converted text contains the href hostname, use that stable source label
-  // instead of copying every presentational descendant.
-  if (text && hrefHostname && text.indexOf(hrefHostname) >= 0) return hrefHostname;
+  // and hidden animated alternative labels inside the same anchor. Collapse to
+  // the hostname only when those UI-specific signals are present, so ordinary
+  // links that mention their host keep their full authored label.
+  const looksLikeCitationPill = !!text && !!hrefHostname && text.indexOf(hrefHostname) >= 0 && (
+    /\+\d+/.test(text) ||
+    hasCitationMarker(node) ||
+    !!node.querySelector('[style*="opacity: 0"], [aria-hidden="true"]')
+  );
+  if (looksLikeCitationPill) return hrefHostname;
   if (text && !/^\+\d+$/.test(text)) return text;
 
   const alt = (node.getAttribute('alt') || '').trim();
   if (alt) return getHostname(alt);
 
   return hrefHostname;
+};
+
+const readableLinkRule = {
+  references: [] as string[],
+
+  filter: function (node: Node) {
+    return node.nodeName === 'A' && !!(node as HTMLAnchorElement).getAttribute('href');
+  },
+
+  replacement: function (content: string, node: Node, options: TurndownServie.Options) {
+    const anchor = node as HTMLAnchorElement;
+    const href = escapeLinkDestination(anchor.getAttribute('href') || '');
+    const text = getReadableLinkText(content, anchor);
+    const rawTitle = cleanAttribute(anchor.getAttribute('title'));
+    const title = rawTitle ? ' "' + escapeLinkTitle(rawTitle) + '"' : '';
+
+    if (options.linkStyle === 'referenced') {
+      let replacement = '';
+      let reference = '';
+
+      switch (options.linkReferenceStyle) {
+        case 'collapsed':
+          replacement = '[' + text + '][]';
+          reference = '[' + text + ']: ' + href + title;
+          break;
+        case 'shortcut':
+          replacement = '[' + text + ']';
+          reference = '[' + text + ']: ' + href + title;
+          break;
+        default:
+          const id = readableLinkRule.references.length + 1;
+          replacement = '[' + text + '][' + id + ']';
+          reference = '[' + id + ']: ' + href + title;
+      }
+
+      readableLinkRule.references.push(reference);
+      return replacement;
+    }
+
+    return '[' + text + '](' + href + title + ')';
+  },
+
+  append: function () {
+    if (!readableLinkRule.references.length) return '';
+
+    const references = '\n\n' + readableLinkRule.references.join('\n') + '\n\n';
+    readableLinkRule.references = [];
+    return references;
+  }
 };
 
 const replaceTextNewlines = (node: Node, mode: WhiteSpaceNewlineMode): void => {
@@ -205,16 +294,13 @@ turndownServie.addRule('heading-with-clean-block-start-escapes', {
   }
 });
 
-turndownServie.addRule('links-with-readable-fallback-text', {
-  filter: function (node) {
-    return node.nodeName === 'A' && !!(node as HTMLAnchorElement).getAttribute('href');
-  },
-  replacement: function (content, node) {
-    const anchor = node as HTMLAnchorElement;
-    const href = anchor.getAttribute('href') || '';
-    const text = getReadableLinkText(content, anchor);
+turndownServie.addRule('links-with-readable-fallback-text', readableLinkRule);
 
-    return '[' + text + '](' + escapeLinkDestination(href) + ')';
+turndownServie.addRule('textarea-with-default-preformatted-whitespace', {
+  filter: 'textarea',
+  replacement: function (content, node) {
+    const text = ((node as HTMLTextAreaElement).value || content).replace(/<br\s*\/?\s*>/gi, '  \n');
+    return '\n\n' + text + '\n\n';
   }
 });
 

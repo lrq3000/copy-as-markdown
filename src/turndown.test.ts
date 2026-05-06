@@ -120,9 +120,41 @@ Third line</div>`;
     expect(turndownServie.turndown(html)).toBe('First line  \nSecond line  \nThird line');
   });
 
+  it('preserves newlines for preformatted elements without explicit white-space styles', () => {
+    expect(turndownServie.turndown('<pre>First line\nSecond line</pre>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<textarea>First line\nSecond line</textarea>'))
+      .toBe('First line  \nSecond line');
+  });
+
   it('preserves ordinary links', () => {
     expect(turndownServie.turndown('<p>Read <a href="https://example.com/docs">the docs</a>.</p>'))
       .toBe('Read [the docs](https://example.com/docs).');
+  });
+
+  it('keeps full visible text when an ordinary link mentions the hostname', () => {
+    expect(turndownServie.turndown('<a href="https://example.com/api">example.com/api documentation</a>'))
+      .toBe('[example.com/api documentation](https://example.com/api)');
+  });
+
+  it('preserves link titles and sanitizes multiline destinations', () => {
+    const html = '<a href="https://example.com/a b\n(c)" title="A &quot;quoted&quot; title">example</a>';
+
+    expect(turndownServie.turndown(html))
+      .toBe('[example](<https://example.com/a b (c)> "A \\"quoted\\" title")');
+  });
+
+  it('respects referenced link style', () => {
+    const options = (turndownServie as any).options;
+    const originalLinkStyle = options.linkStyle;
+
+    options.linkStyle = 'referenced';
+    try {
+      expect(turndownServie.turndown('<a href="https://example.com/docs" title="Docs">the docs</a>'))
+        .toBe('[the docs][1]\n\n[1]: https://example.com/docs "Docs"');
+    } finally {
+      options.linkStyle = originalLinkStyle;
+    }
   });
 
   it('preserves citation-style links with readable fallback text', () => {
