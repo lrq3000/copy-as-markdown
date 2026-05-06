@@ -266,14 +266,23 @@ const normalizeWhiteSpaceTextNodes = (node: Node, inheritedMode: WhiteSpaceNewli
 };
 
 const createPreprocessRoot = (html: string): Element | null => {
+  const wrappedHtml = '<x-turndown-root>' + html + '</x-turndown-root>';
+
   if (typeof DOMParser !== 'undefined') {
-    const doc = new DOMParser().parseFromString('<x-turndown-root>' + html + '</x-turndown-root>', 'text/html');
+    const doc = new DOMParser().parseFromString(wrappedHtml, 'text/html');
     return doc.querySelector('x-turndown-root');
   }
 
-  const domino = require('@mixmark-io/domino');
-  const doc = domino.createDocument('<x-turndown-root>' + html + '</x-turndown-root>');
-  return doc.querySelector('x-turndown-root');
+  // Content scripts run in real browser documents, but keeping this fallback
+  // makes the preprocessing path tolerant of unusual DOMParser availability
+  // without pulling Node-only parsers such as Domino into MV3 bundles.
+  if (typeof document !== 'undefined' && document.implementation && document.implementation.createHTMLDocument) {
+    const doc = document.implementation.createHTMLDocument('');
+    doc.body.innerHTML = wrappedHtml;
+    return doc.querySelector('x-turndown-root');
+  }
+
+  return null;
 };
 
 const preprocessTurndownInput = (input: string | Node): string | Node => {

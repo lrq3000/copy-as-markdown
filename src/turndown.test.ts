@@ -1,4 +1,16 @@
-import { turndownServie } from './types';
+const domino = require('@mixmark-io/domino');
+
+// Production content scripts must not import Domino because Chrome injects them
+// as browser JavaScript resources. Tests still need a DOMParser equivalent in
+// Node so the same preprocessing branches remain covered without contaminating
+// the browser bundle.
+(global as any).DOMParser = class {
+  parseFromString(html: string) {
+    return domino.createDocument(html);
+  }
+};
+
+const { turndownServie } = require('./types');
 
 describe('turndownService', () => {
   it('preserves inline equations', () => {
