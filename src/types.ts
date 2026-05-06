@@ -5,6 +5,158 @@ export const turndownServie = new TurndownServie({headingStyle: 'atx', codeBlock
 turndownServie.use(gfm)
 const defaultEscape = turndownServie.escape.bind(turndownServie);
 
+const blockStartEscapesInHeading = [
+  [/^\\(#{1,6} )/, '$1'],
+  [/^\\(-)/, '$1'],
+  [/^\\(\+ )/, '$1'],
+  [/^\\(>)/, '$1'],
+  [/^\\(=+)/, '$1'],
+  [/^\\(~~~)/, '$1'],
+  [/^(\d+)\\\. /, '$1. ']
+];
+
+const hasClass = (node: Element, className: string): boolean => {
+  return node.classList && node.classList.contains(className);
+};
+
+const isPreWrapContainer = (node: Element): boolean => {
+  const style = node.getAttribute('style') || '';
+
+  return hasClass(node, 'whitespace-pre-wrap') || /white-space\s*:\s*(pre-wrap|break-spaces|pre-line)/i.test(style);
+};
+
+const unescapeHeadingContent = (content: string): string => {
+  // Turndown escapes block-start Markdown markers before the heading rule runs.
+  // Once the text is inside an ATX heading, those escapes no longer prevent a
+  // list, blockquote, thematic break, or competing heading from starting, while
+  // inline-protecting escapes such as \*, \[, \], \_, and \` still matter.
+  return blockStartEscapesInHeading.reduce((heading, escape) => heading.replace(escape[0], escape[1]), content);
+};
+
+const escapeLinkDestination = (destination: string): string => {
+  const escaped = destination.replace(/([<>()])/g, '\\$1');
+  return escaped.indexOf(' ') >= 0 ? '<' + escaped + '>' : escaped;
+};
+
+const getHostname = (href: string): string => {
+  try {
+    return new URL(href).hostname || href;
+  } catch (e) {
+    return href;
+  }
+};
+
+const getReadableLinkText = (content: string, node: HTMLAnchorElement): string => {
+  const text = content.replace(/\s+/g, ' ').trim();
+  const hrefHostname = getHostname(node.getAttribute('href') || '');
+
+  // Citation pills often render the source hostname, counters such as "+2",
+  // and hidden animated alternative labels inside the same anchor. If the
+  // converted text contains the href hostname, use that stable source label
+  // instead of copying every presentational descendant.
+  if (text && hrefHostname && text.indexOf(hrefHostname) >= 0) return hrefHostname;
+  if (text && !/^\+\d+$/.test(text)) return text;
+
+  const alt = (node.getAttribute('alt') || '').trim();
+  if (alt) return getHostname(alt);
+
+  return hrefHostname;
+};
+
+const replaceTextNewlinesWithBreaks = (node: Node): void => {
+  for (const child of Array.from(node.childNodes)) {
+    if (child.nodeType === 3 && child.textContent && /\r|\n/.test(child.textContent)) {
+      const parts = child.textContent.split(/(\r\n|\r|\n)/);
+
+      for (const part of parts) {
+        if (!part) continue;
+
+        if (/^(\r\n|\r|\n)$/.test(part)) {
+          node.insertBefore(child.ownerDocument.createElement('br'), child);
+        } else {
+          node.insertBefore(child.ownerDocument.createTextNode(part), child);
+        }
+      }
+
+      node.removeChild(child);
+      continue;
+    }
+
+    replaceTextNewlinesWithBreaks(child);
+  }
+};
+
+const preservePreWrapNewlines = (root: ParentNode): void => {
+  for (const node of Array.from(root.querySelectorAll('*'))) {
+    if (isPreWrapContainer(node as Element)) {
+      replaceTextNewlinesWithBreaks(node);
+    }
+  }
+};
+
+const createPreprocessRoot = (html: string): Element | null => {
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString('<x-turndown-root>' + html + '</x-turndown-root>', 'text/html');
+    return doc.querySelector('x-turndown-root');
+  }
+
+  const domino = require('@mixmark-io/domino');
+  const doc = domino.createDocument('<x-turndown-root>' + html + '</x-turndown-root>');
+  return doc.querySelector('x-turndown-root');
+};
+
+const preprocessTurndownInput = (input: string | Node): string | Node => {
+  if (typeof input === 'string') {
+    if (!/(\r|\n|whitespace-pre-wrap|white-space\s*:)/i.test(input)) return input;
+
+    const root = createPreprocessRoot(input);
+    if (!root) return input;
+
+    preservePreWrapNewlines(root);
+    return root.innerHTML;
+  }
+
+  const root = input.cloneNode(true) as Node;
+  if ('querySelectorAll' in root) {
+    preservePreWrapNewlines(root as ParentNode);
+  }
+  return root;
+};
+
+const defaultTurndown = turndownServie.turndown.bind(turndownServie);
+
+turndownServie.turndown = function (input: string | Node): string {
+  return defaultTurndown(preprocessTurndownInput(input));
+};
+
+turndownServie.addRule('heading-with-clean-block-start-escapes', {
+  filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+  replacement: function (content, node, options) {
+    const hLevel = Number(node.nodeName.charAt(1));
+    const cleanedContent = unescapeHeadingContent(content);
+
+    if (options.headingStyle === 'setext' && hLevel < 3) {
+      const underline = Array(cleanedContent.length + 1).join(hLevel === 1 ? '=' : '-');
+      return '\n\n' + cleanedContent + '\n' + underline + '\n\n';
+    }
+
+    return '\n\n' + Array(hLevel + 1).join('#') + ' ' + cleanedContent + '\n\n';
+  }
+});
+
+turndownServie.addRule('links-with-readable-fallback-text', {
+  filter: function (node) {
+    return node.nodeName === 'A' && !!(node as HTMLAnchorElement).getAttribute('href');
+  },
+  replacement: function (content, node) {
+    const anchor = node as HTMLAnchorElement;
+    const href = anchor.getAttribute('href') || '';
+    const text = getReadableLinkText(content, anchor);
+
+    return '[' + text + '](' + escapeLinkDestination(href) + ')';
+  }
+});
+
 turndownServie.addRule('katex', {
   filter: function (node) {
     return node.nodeName === 'SPAN' && node.classList.contains('katex');
