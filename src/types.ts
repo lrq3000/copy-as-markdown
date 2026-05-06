@@ -43,6 +43,8 @@ const whiteSpaceValueNewlineModes: {[value: string]: WhiteSpaceNewlineMode} = {
   'wrap': 'collapse'
 };
 
+const textareaRawValueAttribute = 'data-copy-as-markdown-raw-value';
+
 const getWhiteSpaceStyleValue = (node: Element): string | undefined => {
   const style = node.getAttribute('style') || '';
   const match = style.match(/(?:^|;)\s*white-space\s*:\s*([^;]+)/i);
@@ -85,6 +87,20 @@ const getDeclaredWhiteSpaceMode = (node: Element): WhiteSpaceNewlineMode | undef
 
 const hasExplicitWhiteSpaceHandling = (html: string): boolean => {
   return /white-space\s*:|whitespace-(normal|nowrap|pre|pre-wrap|pre-line|break-spaces)|<(pre|textarea)(\s|>)/i.test(html);
+};
+
+const encodeAttributeValue = (value: string): string => {
+  return encodeURIComponent(value);
+};
+
+const decodeAttributeValue = (value: string | null): string | undefined => {
+  if (!value) return undefined;
+
+  try {
+    return decodeURIComponent(value);
+  } catch (e) {
+    return undefined;
+  }
 };
 
 const unescapeHeadingContent = (content: string): string => {
@@ -235,6 +251,11 @@ const replaceTextNewlines = (node: Node, mode: WhiteSpaceNewlineMode): void => {
 const normalizeWhiteSpaceTextNodes = (node: Node, inheritedMode: WhiteSpaceNewlineMode): void => {
   const mode = node.nodeType === 1 ? getDeclaredWhiteSpaceMode(node as Element) || inheritedMode : inheritedMode;
 
+  if (node.nodeName === 'TEXTAREA') {
+    (node as Element).setAttribute(textareaRawValueAttribute, encodeAttributeValue((node as HTMLTextAreaElement).value || node.textContent || ''));
+    return;
+  }
+
   replaceTextNewlines(node, mode);
 
   for (const child of Array.from(node.childNodes)) {
@@ -299,8 +320,8 @@ turndownServie.addRule('links-with-readable-fallback-text', readableLinkRule);
 turndownServie.addRule('textarea-with-default-preformatted-whitespace', {
   filter: 'textarea',
   replacement: function (content, node) {
-    const text = ((node as HTMLTextAreaElement).value || content).replace(/<br\s*\/?\s*>/gi, '  \n');
-    return '\n\n' + text + '\n\n';
+    const text = decodeAttributeValue((node as Element).getAttribute(textareaRawValueAttribute)) || (node as HTMLTextAreaElement).value || content;
+    return '\n\n' + text.replace(/\r\n|\r|\n/g, '  \n') + '\n\n';
   }
 });
 

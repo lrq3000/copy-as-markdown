@@ -127,6 +127,11 @@ Third line</div>`;
       .toBe('First line  \nSecond line');
   });
 
+  it('preserves literal br text inside textarea values', () => {
+    expect(turndownServie.turndown('<textarea>First &lt;br&gt; Second\nThird</textarea>'))
+      .toBe('First <br> Second  \nThird');
+  });
+
   it('preserves ordinary links', () => {
     expect(turndownServie.turndown('<p>Read <a href="https://example.com/docs">the docs</a>.</p>'))
       .toBe('Read [the docs](https://example.com/docs).');
