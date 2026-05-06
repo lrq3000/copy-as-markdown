@@ -1,6 +1,6 @@
 {
   "name": "copy-as-markdown",
-  "version": "0.0.15",
+  "version": "1.0.0",
   "description": "Copy the selected HTML as Markdown. Compatible with LLM chatbots outputs such as ChatGPT and Gemini.",
   "main": "index.js",
   "scripts": {
@@ -19,6 +19,9 @@
     "Markdown"
   ],
   "author": "sjmyuan",
+  "contributors": [
+    "Stephen Karl Larroque"
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/lrq3000/copy-as-markdown/issues"
