@@ -19,6 +19,22 @@ describe('turndownService', () => {
       .toBe('This is **bold** and *italic* text.');
   });
 
+  it('does not keep unnecessary block-start escapes in headings', () => {
+    expect(turndownServie.turndown('<h2>6. Strong formulation</h2>'))
+      .toBe('## 6. Strong formulation');
+    expect(turndownServie.turndown('<h3># Topic</h3>'))
+      .toBe('### # Topic');
+    expect(turndownServie.turndown('<h4>- not a list</h4>'))
+      .toBe('#### - not a list');
+    expect(turndownServie.turndown('<h5>> not a blockquote</h5>'))
+      .toBe('##### > not a blockquote');
+  });
+
+  it('keeps inline-protecting escapes in headings', () => {
+    expect(turndownServie.turndown('<h2>Literal *asterisks* and [brackets]</h2>'))
+      .toBe('## Literal *asterisks* and \\[brackets\\]');
+  });
+
   it('preserves complex equation syntax', () => {
     expect(turndownServie.turndown('<div>$$ \\sum_{i=1}^{n} x_i $$</div>')).toBe('$$ \\sum_{i=1}^{n} x_i $$');
   });
@@ -67,5 +83,89 @@ describe('turndownService', () => {
     const htmlWithLanguage = `<pre><code class="language-javascript"><span>Scarcity</span><br><span>Utility</span></code></pre>`;
     const expectedLanguage = '```javascript\nScarcity\nUtility\n```';
     expect(turndownServie.turndown(htmlWithLanguage)).toBe(expectedLanguage);
+  });
+
+  it('preserves displayed newlines in pre-wrap text containers', () => {
+    const html = `<div class="max-w-full min-w-0 [overflow-wrap:anywhere] whitespace-pre-wrap">First line
+
+Second line</div>`;
+
+    expect(turndownServie.turndown(html)).toBe('First line  \n  \nSecond line');
+  });
+
+  it('preserves newlines for all newline-preserving white-space values', () => {
+    expect(turndownServie.turndown('<div style="white-space: pre">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<div style="white-space: pre-wrap">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<div style="white-space: pre-line">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<div style="white-space: break-spaces">First line\nSecond line</div>'))
+      .toBe('First line  \nSecond line');
+  });
+
+  it('collapses newlines to spaces for white-space values that do not preserve them', () => {
+    expect(turndownServie.turndown('<div style="white-space: normal">First line\nSecond line</div>'))
+      .toBe('First line Second line');
+    expect(turndownServie.turndown('<div style="white-space: nowrap">First line\nSecond line</div>'))
+      .toBe('First line Second line');
+  });
+
+  it('honors nested white-space overrides', () => {
+    const html = `<div style="white-space: pre-wrap">First line
+<span style="white-space: normal">Second
+line</span>
+Third line</div>`;
+
+    expect(turndownServie.turndown(html)).toBe('First line  \nSecond line  \nThird line');
+  });
+
+  it('preserves newlines for preformatted elements without explicit white-space styles', () => {
+    expect(turndownServie.turndown('<pre>First line\nSecond line</pre>'))
+      .toBe('First line  \nSecond line');
+    expect(turndownServie.turndown('<textarea>First line\nSecond line</textarea>'))
+      .toBe('First line  \nSecond line');
+  });
+
+  it('preserves literal br text inside textarea values', () => {
+    expect(turndownServie.turndown('<textarea>First &lt;br&gt; Second\nThird</textarea>'))
+      .toBe('First <br> Second  \nThird');
+  });
+
+  it('preserves ordinary links', () => {
+    expect(turndownServie.turndown('<p>Read <a href="https://example.com/docs">the docs</a>.</p>'))
+      .toBe('Read [the docs](https://example.com/docs).');
+  });
+
+  it('keeps full visible text when an ordinary link mentions the hostname', () => {
+    expect(turndownServie.turndown('<a href="https://example.com/api">example.com/api documentation</a>'))
+      .toBe('[example.com/api documentation](https://example.com/api)');
+  });
+
+  it('preserves link titles and sanitizes multiline destinations', () => {
+    const html = '<a href="https://example.com/a b\n(c)" title="A &quot;quoted&quot; title">example</a>';
+
+    expect(turndownServie.turndown(html))
+      .toBe('[example](<https://example.com/a b (c)> "A \\"quoted\\" title")');
+  });
+
+  it('respects referenced link style', () => {
+    const options = (turndownServie as any).options;
+    const originalLinkStyle = options.linkStyle;
+
+    options.linkStyle = 'referenced';
+    try {
+      expect(turndownServie.turndown('<a href="https://example.com/docs" title="Docs">the docs</a>'))
+        .toBe('[the docs][1]\n\n[1]: https://example.com/docs "Docs"');
+    } finally {
+      options.linkStyle = originalLinkStyle;
+    }
+  });
+
+  it('preserves citation-style links with readable fallback text', () => {
+    const html = `<p>Climate evidence <span data-state="closed"><span data-testid="webpage-citation-pill"><a href="https://science.nasa.gov/climate-change/evidence/?utm_source=chatgpt.com" alt="https://science.nasa.gov/climate-change/evidence/?utm_source=chatgpt.com"><span><span>science.nasa.gov</span><span>+2</span></span><span style="opacity: 0;"><span>ncei.noaa.gov</span><span>+2</span></span></a></span></span></p>`;
+
+    expect(turndownServie.turndown(html))
+      .toBe('Climate evidence [science.nasa.gov](https://science.nasa.gov/climate-change/evidence/?utm_source=chatgpt.com)');
   });
 });
