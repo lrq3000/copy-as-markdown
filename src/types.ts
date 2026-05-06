@@ -54,6 +54,58 @@ turndownServie.addRule('mathjax_ignore', {
   }
 });
 
+turndownServie.addRule('pre-code-with-br', {
+  filter: function (node) {
+    if (node.nodeName === 'PRE') {
+      const codeEl = (node as Element).querySelector('code');
+      if (codeEl && codeEl.querySelector('br') !== null) {
+        return true;
+      }
+    }
+    if (node.nodeName === 'CODE' && node.parentNode && node.parentNode.nodeName !== 'PRE' && (node as Element).querySelector('br') !== null) {
+      return true;
+    }
+    return false;
+  },
+  replacement: function (content, node) {
+    const extractText = (n: Node): string => {
+        if (n.nodeName === 'BR') return '\n';
+        if (n.nodeType === 3) return n.textContent || '';
+
+        let text = '';
+        for (let child of Array.from(n.childNodes)) {
+            text += extractText(child);
+        }
+        return text;
+    };
+
+    let textContent = '';
+    let codeNode: Element | null = null;
+
+    if (node.nodeName === 'PRE') {
+       codeNode = (node as Element).querySelector('code');
+       if (codeNode) {
+          textContent = extractText(codeNode);
+       } else {
+          textContent = extractText(node);
+       }
+    } else {
+       codeNode = node as Element;
+       textContent = extractText(node);
+    }
+
+    let language = '';
+    if (codeNode && codeNode.className) {
+      const match = codeNode.className.match(/language-(\S+)/);
+      if (match) {
+        language = match[1];
+      }
+    }
+
+    return '\n```' + language + '\n' + textContent.trimEnd() + '\n```\n';
+  }
+});
+
 const preserveRawMarkdownPattern = /(\$\$[\s\S]*?\$\$|\$[^$]+\$|\\\[[\s\S]*?\\\]|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|__[^_]+__|_[^_]+_)/g;
 
 turndownServie.escape = function (string) {
