@@ -102,7 +102,7 @@ turndownServie.addRule('pre-code-with-br', {
       }
     }
 
-    return '\n```' + language + '\n' + textContent + '\n```\n';
+    return '\n```' + language + '\n' + textContent.trimEnd() + '\n```\n';
   }
 });
 
