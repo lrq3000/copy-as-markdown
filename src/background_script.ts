@@ -6,14 +6,33 @@ chrome.runtime.onStartup.addListener(() => {
 // Initial timeout duration in milliseconds (5 seconds)
 const INITIAL_TIMEOUT_MS = 5000;
 
-// Use a persistent message listener instead of creating/removing listeners
-// timeout is made optional because it is now managed by the waitForSelectionMessage closure
-let pendingRequests: Map<number, {resolve: Function, reject: Function, timeout?: NodeJS.Timeout}> = new Map();
+// Monotonic counter to uniquely identify each pending request for a given tab.
+// This prevents a stale timeout/cleanup from deleting a newer request's map entry.
+let nextRequestId = 0;
 
-// Clean up a completed pending request: clear any leftover timer and remove from map
-function cleanupPendingRequest(tabId: number) {
+interface PendingRequest {
+  resolve: Function;
+  reject: Function;
+  timeout?: NodeJS.Timeout;
+  /** Uniquely identifies this request among all requests for the same tab. */
+  requestId: number;
+}
+
+// Use a persistent message listener instead of creating/removing listeners
+let pendingRequests: Map<number, PendingRequest> = new Map();
+
+/**
+ * Clean up a completed pending request by clearing its timer and removing it
+ * from the map, but ONLY if the map entry still belongs to this requestId.
+ * This guards against a stale cleanup call overwriting a newer request for the
+ * same tab.
+ */
+function cleanupPendingRequest(tabId: number, requestId: number) {
   const pendingRequest = pendingRequests.get(tabId);
-  if (pendingRequest && pendingRequest.timeout) {
+  if (!pendingRequest || pendingRequest.requestId !== requestId) {
+    return; // Either no entry or a newer request has overwritten this one
+  }
+  if (pendingRequest.timeout) {
     clearTimeout(pendingRequest.timeout);
   }
   pendingRequests.delete(tabId);
@@ -25,7 +44,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const pendingRequest = pendingRequests.get(tabId);
 
     if (pendingRequest) {
-      cleanupPendingRequest(tabId);
+      const requestId = pendingRequest.requestId;
+      cleanupPendingRequest(tabId, requestId);
 
       const markdownText = request.selection as string;
 
@@ -71,19 +91,36 @@ async function askUserToKeepWaiting(tabId: number): Promise<boolean> {
 // When the timer expires, the user is prompted to continue or cancel.
 // If they continue, the timeout doubles and a new timer starts.
 // This repeats until either the message arrives or the user cancels.
+// Rejects immediately if a previous request for the same tab is still pending,
+// to avoid the newer request's map entry being silently deleted by the older
+// request's cleanup.
 function waitForSelectionMessage(tabId: number): Promise<void> {
+  // Guard: reject concurrent requests for the same tab so that a stale
+  // cleanup from an older request cannot erase a newer request's map entry.
+  const existing = pendingRequests.get(tabId);
+  if (existing) {
+    return Promise.reject(
+      new Error('A copy request is already pending for this tab. Please wait for it to complete or cancel.')
+    );
+  }
+
+  // Acquire a unique ID for this request before any async gap
+  const requestId = nextRequestId++;
+
   return new Promise<void>((resolve, reject) => {
     let timeoutDuration = INITIAL_TIMEOUT_MS;
     let timeoutId: NodeJS.Timeout | undefined;
     let isResolved = false; // Guard against double resolve/reject after user interaction
 
-    // Clean up timers and remove from pending map
+    // Clean up timers and remove from pending map, but ONLY if the map entry
+    // still belongs to this requestId (prevents stale cleanup from clobbering
+    // a newer request).
     const cleanup = () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = undefined;
       }
-      pendingRequests.delete(tabId);
+      cleanupPendingRequest(tabId, requestId);
     };
 
     // Called when the timeout fires: prompt user, then either continue or reject
@@ -122,7 +159,8 @@ function waitForSelectionMessage(tabId: number): Promise<void> {
         cleanup();
         reject(err);
       },
-      timeout: undefined // Timeout is managed by the closure, not the map entry
+      timeout: undefined, // Timeout is managed by the closure, not the map entry
+      requestId
     });
 
     // Set the initial timeout
