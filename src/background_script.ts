@@ -3,8 +3,21 @@ chrome.runtime.onStartup.addListener(() => {
   console.log('Service worker started up');
 });
 
+// Initial timeout duration in milliseconds (5 seconds)
+const INITIAL_TIMEOUT_MS = 5000;
+
 // Use a persistent message listener instead of creating/removing listeners
-let pendingRequests: Map<number, {resolve: Function, reject: Function, timeout: NodeJS.Timeout}> = new Map();
+// timeout is made optional because it is now managed by the waitForSelectionMessage closure
+let pendingRequests: Map<number, {resolve: Function, reject: Function, timeout?: NodeJS.Timeout}> = new Map();
+
+// Clean up a completed pending request: clear any leftover timer and remove from map
+function cleanupPendingRequest(tabId: number) {
+  const pendingRequest = pendingRequests.get(tabId);
+  if (pendingRequest && pendingRequest.timeout) {
+    clearTimeout(pendingRequest.timeout);
+  }
+  pendingRequests.delete(tabId);
+}
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (sender.tab?.id && request.selection !== undefined) {
@@ -12,8 +25,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const pendingRequest = pendingRequests.get(tabId);
 
     if (pendingRequest) {
-      clearTimeout(pendingRequest.timeout);
-      pendingRequests.delete(tabId);
+      cleanupPendingRequest(tabId);
 
       const markdownText = request.selection as string;
 
@@ -37,66 +49,128 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   }
 });
 
-// Handle action clicks
+// Ask the user whether to continue waiting when the timeout fires.
+// Injects a confirm() dialog into the target page so the user can decide.
+async function askUserToKeepWaiting(tabId: number): Promise<boolean> {
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => window.confirm(
+        'Converting selected text to Markdown is taking longer than expected.\n\nDo you want to continue waiting?'
+      ),
+      injectImmediately: true
+    });
+    return results[0]?.result === true;
+  } catch {
+    // If script injection fails (e.g. tab closed), treat as user cancellation
+    return false;
+  }
+}
+
+// Wait for the selection message with an interactive timeout that doubles each round.
+// When the timer expires, the user is prompted to continue or cancel.
+// If they continue, the timeout doubles and a new timer starts.
+// This repeats until either the message arrives or the user cancels.
+function waitForSelectionMessage(tabId: number): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    let timeoutDuration = INITIAL_TIMEOUT_MS;
+    let timeoutId: NodeJS.Timeout | undefined;
+    let isResolved = false; // Guard against double resolve/reject after user interaction
+
+    // Clean up timers and remove from pending map
+    const cleanup = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+      pendingRequests.delete(tabId);
+    };
+
+    // Called when the timeout fires: prompt user, then either continue or reject
+    const handleTimeout = async () => {
+      if (isResolved) return; // Message arrived while confirm was showing
+      try {
+        const continueWaiting = await askUserToKeepWaiting(tabId);
+        if (!isResolved) {
+          if (continueWaiting) {
+            timeoutDuration *= 2; // Double the timeout for the next round
+            console.log(`User chose to continue waiting. New timeout: ${timeoutDuration}ms`);
+            timeoutId = setTimeout(handleTimeout, timeoutDuration);
+          } else {
+            console.log('User cancelled the copy operation');
+            cleanup();
+            reject(new Error('User cancelled the copy operation'));
+          }
+        }
+      } catch {
+        if (!isResolved) {
+          cleanup();
+          reject(new Error('Message timeout'));
+        }
+      }
+    };
+
+    // Store the pending request so the global message listener can resolve it
+    pendingRequests.set(tabId, {
+      resolve: () => {
+        isResolved = true;
+        cleanup();
+        resolve();
+      },
+      reject: (err: Error) => {
+        isResolved = true;
+        cleanup();
+        reject(err);
+      },
+      timeout: undefined // Timeout is managed by the closure, not the map entry
+    });
+
+    // Set the initial timeout
+    timeoutId = setTimeout(handleTimeout, timeoutDuration);
+  });
+}
+
+// Handle action clicks (toolbar button)
 chrome.action.onClicked.addListener(async (tab) => {
   if (tab?.id) {
     try {
-      // Create a promise that will resolve when the message is received
-      const messagePromise = new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          pendingRequests.delete(tab.id as number);
-          reject(new Error('Message timeout'));
-        }, 5000);
-
-        pendingRequests.set(tab.id as number, { resolve, reject, timeout });
-      });
-
-      const selectionResult = await chrome.scripting.executeScript({
+      // Inject the selection script which will convert HTML to Markdown
+      await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         files: ['js/content_script_get_selection.bundle.js'],
         injectImmediately: true
       });
 
-      // Wait for the message to be processed
-      await messagePromise;
+      // Wait with interactive timeout for the content script to send back the result
+      await waitForSelectionMessage(tab.id);
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
   }
 });
 
-
+// Handle keyboard shortcut
 chrome.commands.onCommand.addListener(async function (command) {
   if (command === 'copy-as-markdown') {
     const tabs = await chrome.tabs.query({active: true, currentWindow: true});
     const tab = tabs[0];
     if (tab?.id) {
       try {
-        // Create a promise that will resolve when the message is received
-        const messagePromise = new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            pendingRequests.delete(tab.id as number);
-            reject(new Error('Message timeout'));
-          }, 5000);
-
-          pendingRequests.set(tab.id as number, { resolve, reject, timeout });
-        });
-
-        const selectionResult = await chrome.scripting.executeScript({
+        // Inject the selection script which will convert HTML to Markdown
+        await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ['js/content_script_get_selection.bundle.js'],
           injectImmediately: true
         });
 
-        // Wait for the message to be processed
-        await messagePromise;
+        // Wait with interactive timeout for the content script to send back the result
+        await waitForSelectionMessage(tab.id);
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
     }
   }
 });
-
 
 // Initialize on installation
 chrome.runtime.onInstalled.addListener(() => {
@@ -108,28 +182,20 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async function (info, tab) {
   if (info.menuItemId === 'copy-as-markdown-context-menu') {
     if (tab?.id) {
       try {
-        // Create a promise that will resolve when the message is received
-        const messagePromise = new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            pendingRequests.delete(tab.id as number);
-            reject(new Error('Message timeout'));
-          }, 5000);
-
-          pendingRequests.set(tab.id as number, { resolve, reject, timeout });
-        });
-
-        const selectionResult = await chrome.scripting.executeScript({
+        // Inject the selection script which will convert HTML to Markdown
+        await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ['js/content_script_get_selection.bundle.js'],
           injectImmediately: true
         });
 
-        // Wait for the message to be processed
-        await messagePromise;
+        // Wait with interactive timeout for the content script to send back the result
+        await waitForSelectionMessage(tab.id);
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
