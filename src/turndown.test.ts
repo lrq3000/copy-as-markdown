@@ -31,6 +31,13 @@ describe('turndownService', () => {
       .toBe('This is **bold** and *italic* text.');
   });
 
+  it('does not escape multiple underscores in blockquotes', () => {
+    expect(turndownServie.turndown('<blockquote>____</blockquote>'))
+      .toBe('> ____');
+    expect(turndownServie.turndown('<blockquote>“What I hear you saying is ____. That made you feel ____. I can understand why. My part in that was ____. What would help now?”</blockquote>'))
+      .toBe('> “What I hear you saying is ____. That made you feel ____. I can understand why. My part in that was ____. What would help now?”');
+  });
+
   it('does not keep unnecessary block-start escapes in headings', () => {
     expect(turndownServie.turndown('<h2>6. Strong formulation</h2>'))
       .toBe('## 6. Strong formulation');

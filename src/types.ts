@@ -435,7 +435,7 @@ turndownServie.addRule('pre-code-with-br', {
   }
 });
 
-const preserveRawMarkdownPattern = /(\$\$[\s\S]*?\$\$|\$[^$]+\$|\\\[[\s\S]*?\\\]|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|__[^_]+__|_[^_]+_)/g;
+const preserveRawMarkdownPattern = /(\$\$[\s\S]*?\$\$|\$[^$]+\$|\\\[[\s\S]*?\\\]|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|__[^_]+__|_[^_]+_|_+)/g;
 
 turndownServie.escape = function (string) {
   let escaped = '';
