@@ -8,7 +8,9 @@ Compared to other "Copy as markdown" extensions, this one has the most complete 
 
 It works on desktop, and it is the only copy as markdown extension that also works on mobile, on Chrome for Android based browsers that support extensions (eg, [Mises](https://github.com/mises-id/mises-browser-core), [Cromite](https://github.com/uazo/cromite/commit/d04c8d8c7d7d2bb121d9315d535d99ac91c30825), Edge Canary).
 
-This is a fork of [sjmyuan's](https://github.com/sjmyuan/copy-as-markdown) extension ported to Manifest V3.
+This is a fork of [sjmyuan's](https://github.com/sjmyuan/copy-as-markdown) extension ported to Manifest V3, and with lots of added features to support complex structures exports in agentic outputs such as coding blocks, sources, tools outputs, etc.
+
+As of May 2026, Copy-As-Markdown cannot export whole ChatGPT threads anymore because the rendering was updated to dynamically unload out-of-view messages. I made another extension [ChatGPT Thread Exporter](https://github.com/lrq3000/chatgpt-thread-exporter) to export whole threads despite this change. Copy-As-Markdown still works fine to copy an in-view selection.
 
 ## Install
 
