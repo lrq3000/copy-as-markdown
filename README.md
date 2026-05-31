@@ -1,5 +1,7 @@
 # Copy as Markdown MV3
 
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-4285F4?logo=chromewebstore&logoColor=white)](https://chrome.google.com/webstore/detail/copy-as-markdown/mpaeaaeinmaondpmbigdnpcooahoncfc)
+
 A simple chrome extension which can copy the selected HTML as Markdown to clipboard, including hypertext links. Can copy any web page's content, and it doubles as a LLM/GPT chat log exporter.
 
 Usage is simple: select some (structured) text, then simply tap the extension's icon, or right-click and click the menu item, a nice infobox will temporarily pop up at the bottom to confirm the copy worked. A lot of formatting styles and HTML structures can be converted and copied to markdown: bold, italics, links, tables, etc.
