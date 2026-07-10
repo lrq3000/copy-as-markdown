@@ -31,6 +31,33 @@ describe('turndownService', () => {
       .toBe('This is **bold** and *italic* text.');
   });
 
+  it('does not escape multiple underscores in blockquotes', () => {
+    expect(turndownServie.turndown('<blockquote>____</blockquote>'))
+      .toBe('> ____');
+    expect(turndownServie.turndown('<blockquote>"What I hear you saying is ____. That made you feel ____. I can understand why. My part in that was ____. What would help now?"</blockquote>'))
+      .toBe('> "What I hear you saying is ____. That made you feel ____. I can understand why. My part in that was ____. What would help now?"');
+  });
+
+  it('preserves a single underscore', () => {
+    expect(turndownServie.turndown('<div>_</div>'))
+      .toBe('_');
+  });
+
+  it('preserves three underscores', () => {
+    expect(turndownServie.turndown('<div>___</div>'))
+      .toBe('___');
+  });
+
+  it('preserves multiple underscore sequences in mixed context', () => {
+    expect(turndownServie.turndown('<div>Some text with ___ and more</div>'))
+      .toBe('Some text with ___ and more');
+  });
+
+  it('preserves a trailing underscore', () => {
+    expect(turndownServie.turndown('<div>word_</div>'))
+      .toBe('word_');
+  });
+
   it('does not keep unnecessary block-start escapes in headings', () => {
     expect(turndownServie.turndown('<h2>6. Strong formulation</h2>'))
       .toBe('## 6. Strong formulation');
